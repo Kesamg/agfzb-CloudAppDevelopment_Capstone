@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import CarModel
-from .restapis import get_dealers_from_cf, get_dealer_by_id_from_cf, get_dealer_reviews_from_cf,post_request 
+from .restapis import get_dealers_from_cf, get_dealer_by_id_from_cf, get_dealer_reviews_from_cf,post_request
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from datetime import datetime
@@ -111,15 +111,15 @@ def get_dealerships(request):
 # Create a `get_dealer_details` view to render the reviews of a dealer
 # def get_dealer_details(request, dealer_id):
 # ...
-def get_dealer_details(request, id):
+def get_dealer_details(request, dealer_id):
     if request.method == "GET":
         context = {}
         dealer_url = "https://eu-gb.functions.appdomain.cloud/api/v1/web/7351e6e8-293a-442e-9968-5dc52d086d2f/dealership-package/get-dealership"
-        dealer = get_dealer_by_id_from_cf(dealer_url, id=id)
+        dealer = get_dealer_by_id_from_cf(dealer_url, dealer_id)
         context["dealer"] = dealer
     
         review_url = "https://eu-gb.functions.appdomain.cloud/api/v1/web/7351e6e8-293a-442e-9968-5dc52d086d2f/dealership-package/get-review"
-        reviews = get_dealer_reviews_from_cf(review_url, id=id)
+        reviews = get_dealer_reviews_from_cf(review_url, dealer_id=dealer_id)
         print(reviews)
         context["reviews"] = reviews
         
@@ -130,20 +130,21 @@ def get_dealer_details(request, id):
 # def add_review(request, dealer_id):
 # ...
 def add_review(request, dealer_id):
-    # User must be logged in before posting a review
-    if request.user.is_authenticated:
-        # GET request renders the page with the form for filling out a review
-        if request.method == "GET":
-            url = f"https://5b93346d.us-south.apigw.appdomain.cloud/dealerships/dealer-get?dealerId={dealer_id}"
-            # Get dealer details from the API
-            context = {
-                "cars": CarModel.objects.all(),
-                "dealer": get_dealer_by_id(url, dealer_id=dealer_id),
-            }
-            return render(request, 'djangoapp/add_review.html', context)
-
-        # POST request posts the content in the review submission form to the Cloudant DB using the post_review Cloud Function
-        if request.method == "POST":
+    context = {}
+    dealer_url = "https://eu-gb.functions.appdomain.cloud/api/v1/web/7351e6e8-293a-442e-9968-5dc52d086d2f/dealership-package/get-dealership"
+    dealer = get_dealer_by_id_from_cf(dealer_url, dealer_id)
+    context["dealer"] = dealer
+    if request.method == 'GET':
+        # Get cars for the dealer
+        cars = CarModel.objects.all()
+        print(cars)
+        context["cars"] = cars
+        
+        return render(request, 'djangoapp/add_review.html', context)
+    elif request.method == 'POST':
+        if request.user.is_authenticated:
+            username = request.user.username
+            print(request.POST)
             form = request.POST
             review = dict()
             review["name"] = f"{request.user.first_name} {request.user.last_name}"
@@ -163,18 +164,8 @@ def add_review(request, dealer_id):
             else: 
                 review["purchase_date"] = None
 
-            url = "https://9bebcb01.eu-de.apigw.appdomain.cloud/api/review"  # API Cloud Function route
-            json_payload = {"review": review}  # Create a JSON payload that contains the review data
-
-            # Performing a POST request with the review
-            result = post_request(url, json_payload, dealerId=dealer_id)
-            if int(result.status_code) == 200:
-                print("Review posted successfully.")
-
-            # After posting the review the user is redirected back to the dealer details page
-            return redirect("djangoapp:dealer_details", dealer_id=dealer_id)
-
-    else:
-        # If user isn't logged in, redirect to login page
-        print("User must be authenticated before posting a review. Please log in.")
-        return redirect("/djangoapp/login")
+            new_review = {}
+            new_review["review"] = review
+            review_post_url = "https://eu-gb.functions.appdomain.cloud/api/v1/web/7351e6e8-293a-442e-9968-5dc52d086d2f/dealership-package/post-review"
+            post_request(review_post_url, new_review, dealer_id=dealer_id)
+        return redirect("djangoapp:dealer_details", dealer_id=dealer_id)
