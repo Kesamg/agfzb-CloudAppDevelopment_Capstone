@@ -40,16 +40,16 @@ class CarModel(models.Model):
 
 # A plain Python class to hold dealer data
 class CarDealer:
-    def __init__(self, address, city, full_name, id, lat, long, short_name, st, state, zip):
+    def __init__(self, address, city, full_name, id, lat, long, st, zip):
         self.address = address
         self.city = city
         self.full_name = full_name  # Full name of dealership
         self.id = id  # Dealership id
         self.lat = lat
         self.long = long
-        self.short_name = short_name
+        #self.short_name = short_name
         self.st = st  # State alpha code
-        self.state = state  # Full state name
+        #self.state = state  # Full state name
         self.zip = zip
         self.idx = 0
 
