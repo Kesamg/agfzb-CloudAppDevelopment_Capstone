@@ -88,7 +88,8 @@ def get_dealer_by_id_from_cf(url, id):
         dealer_doc = dealers[0]
         dealer_obj = CarDealer(address=dealer_doc["address"], city=dealer_doc["city"],
                                 id=dealer_doc["id"], lat=dealer_doc["lat"], long=dealer_doc["long"], full_name=dealer_doc["full_name"],
-                                
+                                short_name=dealer_doc["short_name"],
+                                state=dealer_doc["state"], 
                                 st=dealer_doc["st"], zip=dealer_doc["zip"])
     return dealer_obj
 
@@ -129,8 +130,8 @@ def get_dealer_reviews_from_cf(url, **kwargs):
 
 
 def analyze_review_sentiments(text):
-    url = "https://api.eu-gb.natural-language-understanding.watson.cloud.ibm.com/instances/a7d55b2b-30e4-4d58-91a1-bd84cb7b5c14"
-    api_key = "S8Ncd3903aq7KoTo6MJPqi3nrpIvivQuWJdwqmMQifFK"
+    url = "https://api.eu-gb.natural-language-understanding.watson.cloud.ibm.com/instances/68a4f632-2d55-409c-9919-dc631fd4bd11"
+    api_key = "i-j4KRPbBPx9oQQDgwu_G8j61kF30iyAcprMu6Uiuatj"
     authenticator = IAMAuthenticator(api_key)
     natural_language_understanding = NaturalLanguageUnderstandingV1(version='2021-08-01',authenticator=authenticator)
     natural_language_understanding.set_service_url(url)
